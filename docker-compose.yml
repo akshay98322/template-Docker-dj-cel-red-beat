@@ -12,6 +12,8 @@ services:
       - ./.env.dev
     depends_on:
       - db
+      - redis
+      
   db:
     image: postgres:13.0-alpine
     volumes:
@@ -20,6 +22,29 @@ services:
       - 5432:5432
     env_file:
       - ./.env.dev
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: ./app
+    command: celery -A dj_proj worker -l info
+    volumes:
+      - ./app/:/usr/src/app/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - redis
+
+  celery-beat:
+    build: ./app
+    command: celery -A dj_proj beat -l info
+    volumes:
+      - ./app/:/usr/src/app/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - celery
 
 volumes:
   postgres_data:
